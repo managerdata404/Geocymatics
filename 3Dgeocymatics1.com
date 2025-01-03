@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>3D Cymatics Pattern Simulation</title>
+    <style>
+        body { margin: 0; overflow: hidden; }
+        #controls {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            background: rgba(0,0,0,0.7);
+            color: white;
+            padding: 15px;
+            border-radius: 5px;
+            z-index: 1000;
+        }
+        .control-group {
+            margin: 10px 0;
+        }
+        label {
+            display: inline-block;
+            width: 120px;
+        }
+    </style>
+</head>
+<body>
+    <div id="controls">
+        <div class="control-group">
+            <label>Frequency:</label>
+            <input type="range" id="frequency" min="0.1" max="5" step="0.1" value="1">
+            <span id="frequencyValue">1.0</span>
+        </div>
+        <div class="control-group">
+            <label>Amplitude:</label>
+            <input type="range" id="amplitude" min="0" max="2" step="0.1" value="0.5">
+            <span id="amplitudeValue">0.5</span>
+        </div>
+        <div class="control-group">
+            <label>Particles:</label>
+            <input type="range" id="particles" min="1000" max="1000000" step="1000" value="5000">
+            <span id="particlesValue">5000</span>
+        </div>
+        <div class="control-group">
+            <button id="startBtn">Start</button>
+            <button id="stopBtn">Stop</button>
+            <button id="resetBtn">Reset</button>
+        </div>
+        <div class="control-group">
+            <button id="saveBtn">Save State</button>
+            <button id="loadBtn">Load State</button>
+        </div>
+    </div>
+
+    <script type="importmap">
+        {
+            "imports": {
+                "three": "https://cdnjs.cloudflare.com/ajax/libs/three.js/0.160.0/three.module.js",
+                "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
+            }
+        }
+    </script>
+
+    <script type="module">
+        import * as THREE from 'three';
+        import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+
+        // Scene setup
+        const scene = new THREE.Scene();
+        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+        const renderer = new THREE.WebGLRenderer({ antialias: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setPixelRatio(window.devicePixelRatio);
+        document.body.appendChild(renderer.domElement);
+
+        // Controls
+        const controls = new OrbitControls(camera, renderer.domElement);
+        camera.position.set(0, 15, 15);
+        controls.update();
+
+        // Grid helper
+        const gridHelper = new THREE.GridHelper(20, 20);
+        scene.add(gridHelper);
+
+        // Particles
+        let particles = [];
+        let particleSystem;
+
+        // Animation state
+        let isAnimating = false;
+        let time = 0;
+
+        // Parameters
+        let frequency = 1.0;
+        let amplitude = 0.5;
+        let particleCount = 5000;
+
+        function createParticles() {
+            if (particleSystem) {
+                scene.remove(particleSystem);
+            }
+
+            const geometry = new THREE.BufferGeometry();
+            const positions = new Float32Array(particleCount * 3);
+            const colors = new Float32Array(particleCount * 3);
+
+            for (let i = 0; i < particleCount; i++) {
+                const x = (Math.random() - 0.5) * 20;
+                const z = (Math.random() - 0.5) * 20;
+                const y = 0;
+
+                positions[i * 3] = x;
+                positions[i * 3 + 1] = y;
+                positions[i * 3 + 2] = z;
+
+                colors[i * 3] = 0.5 + Math.random() * 0.5;
+                colors[i * 3 + 1] = 0.5 + Math.random() * 0.5;
+                colors[i * 3 + 2] = 1.0;
+            }
+
+            geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+            geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+
+            const material = new THREE.PointsMaterial({
+                size: 0.1,
+                vertexColors: true,
+                transparent: true,
+                opacity: 0.8
+            });
+
+            particleSystem = new THREE.Points(geometry, material);
+            scene.add(particleSystem);
+
+            // Store initial positions
+            particles = [];
+            for (let i = 0; i < particleCount; i++) {
+                particles.push({
+                    x: positions[i * 3],
+                    y: positions[i * 3 + 1],
+                    z: positions[i * 3 + 2],
+                    initialX: positions[i * 3],
+                    initialZ: positions[i * 3 + 2]
+                });
+            }
+        }
+
+        function updateParticles() {
+            const positions = particleSystem.geometry.attributes.position.array;
+
+            for (let i = 0; i < particles.length; i++) {
+                const particle = particles[i];
+
+                // Calculate wave pattern using multiple frequencies
+                const dx = particle.initialX;
+                const dz = particle.initialZ;
+                const distance = Math.sqrt(dx * dx + dz * dz);
+
+                // Combine multiple wave functions for more complex patterns
+                const y = amplitude * (
+                    Math.sin(distance * frequency + time) +
+                    Math.sin(Math.sqrt(dx * dx + dz * dz) * frequency * 0.5 + time * 1.5) +
+                    Math.cos(dx * frequency * 0.3 + time) * Math.sin(dz * frequency * 0.3 + time)
+                ) / 3;
+
+                positions[i * 3 + 1] = y;
+            }
+
+            particleSystem.geometry.attributes.position.needsUpdate = true;
+        }
+
+        function animate() {
+            requestAnimationFrame(animate);
+
+            if (isAnimating) {
+                time += 0.05;
+                updateParticles();
+            }
+
+            controls.update();
+            renderer.render(scene, camera);
+        }
+
+        // Event handlers
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+
+        // UI Controls
+        document.getElementById('frequency').addEventListener('input', (e) => {
+            frequency = parseFloat(e.target.value);
+            document.getElementById('frequencyValue').textContent = frequency.toFixed(1);
+        });
+
+        document.getElementById('amplitude').addEventListener('input', (e) => {
+            amplitude = parseFloat(e.target.value);
+            document.getElementById('amplitudeValue').textContent = amplitude.toFixed(1);
+        });
+
+        document.getElementById('particles').addEventListener('input', (e) => {
+            particleCount = parseInt(e.target.value);
+            document.getElementById('particlesValue').textContent = particleCount;
+            createParticles();
+        });
+
+        document.getElementById('startBtn').addEventListener('click', () => {
+            isAnimating = true;
+        });
+
+        document.getElementById('stopBtn').addEventListener('click', () => {
+            isAnimating = false;
+        });
+
+        document.getElementById('resetBtn').addEventListener('click', () => {
+            time = 0;
+            createParticles();
+        });
+
+        document.getElementById('saveBtn').addEventListener('click', () => {
+            const state = {
+                frequency,
+                amplitude,
+                particleCount,
+                time
+            };
+            localStorage.setItem('cymaticsState', JSON.stringify(state));
+            alert('State saved!');
+        });
+
+        document.getElementById('loadBtn').addEventListener('click', () => {
+            const savedState = localStorage.getItem('cymaticsState');
+            if (savedState) {
+                const state = JSON.parse(savedState);
+                frequency = state.frequency;
+                amplitude = state.amplitude;
+                particleCount = state.particleCount;
+                time = state.time;
+
+                document.getElementById('frequency').value = frequency;
+                document.getElementById('frequencyValue').textContent = frequency.toFixed(1);
+                document.getElementById('amplitude').value = amplitude;
+                document.getElementById('amplitudeValue').textContent = amplitude.toFixed(1);
+                document.getElementById('particles').value = particleCount;
+                document.getElementById('particlesValue').textContent = particleCount;
+
+                createParticles();
+                alert('State loaded!');
+            } else {
+                alert('No saved state found!');
+            }
+        });
+
+        // Initialize
+        createParticles();
+        animate();
+    </script>
+</body>
+</html>
