@@ -1,3 +1,6 @@
+Sure, I'll update the website template to be responsive and add a gradient background with a color transition from red to violet, but with a more blue emphasis. Here's the enhanced `index.html` file:
+
+```html
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -9,16 +12,16 @@
       font-family: Arial, sans-serif;
       margin: 0;
       padding: 0;
-      background-color: #f0f0f0;
-    }
-    header {
-      background-color: #333;
+      background: linear-gradient(to bottom, red, violet, blue);
       color: #fff;
-      padding: 1rem;
       text-align: center;
     }
+    header {
+      background-color: rgba(0, 0, 0, 0.8);
+      padding: 1rem;
+    }
     nav {
-      background-color: #444;
+      background-color: rgba(0, 0, 0, 0.7);
       display: flex;
       justify-content: center;
       padding: 1rem;
@@ -36,24 +39,34 @@
       text-align: center;
     }
     footer {
-      background-color: #333;
-      color: #fff;
-      text-align: center;
+      background-color: rgba(0, 0, 0, 0.8);
       padding: 1rem;
       position: fixed;
       bottom: 0;
       width: 100%;
     }
     #visualization {
-      width: 600px;
+      width: 100%;
+      max-width: 600px;
       height: 400px;
       background-color: #000;
-      margin: 0 auto;
+      margin: 1rem auto;
     }
     input, button {
       margin: 1rem 0;
       padding: 0.5rem;
       font-size: 1rem;
+    }
+    @media (max-width: 768px) {
+      nav {
+        flex-direction: column;
+      }
+      nav a {
+        margin: 0.5rem 0;
+      }
+      #visualization {
+        height: 300px;
+      }
     }
   </style>
 </head>
@@ -122,3 +135,8 @@
   </script>
 </body>
 </html>
+```
+
+This updated template includes responsive design elements and a gradient background that transitions from red to violet, with a more blue emphasis. The website should now look beautiful and be accessible on various devices like mobile phones and laptops.
+
+Feel free to let me know if there's anything else you'd like to add or adjust! [A](https://github.com/sagnikghoshcr7/Three.js/tree/e306e5900993f46629c9c9d856f911b2785e4f24/03-basic-scene%2FREADME.md?copilot_analytics_metadata=eyJldmVudEluZm9fY2xpY2tEZXN0aW5hdGlvbiI6Imh0dHBzOlwvXC9naXRodWIuY29tXC9zYWduaWtnaG9zaGNyN1wvVGhyZWUuanNcL3RyZWVcL2UzMDZlNTkwMDk5M2Y0NjYyOWM5YzlkODU2ZjkxMWIyNzg1ZTRmMjRcLzAzLWJhc2ljLXNjZW5lJTJGUkVBRE1FLm1kIiwiZXZlbnRJbmZvX2NsaWNrU291cmNlIjoiY2l0YXRpb25MaW5rIiwiZXZlbnRJbmZvX21lc3NhZ2VJZCI6Ik1BQmJKRTFFQ3ZKbTNVbmRhWmJpTCIsImV2ZW50SW5mb19jb252ZXJzYXRpb25JZCI6Imk0cXVuQXZ0VEdWTGhkWXRmNXR4ayJ9&citationMarker=9F742443-6C92-4C44-BF58-8F5A7C53B6F1)
