@@ -1,16 +1,15 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Cymatics Explorer</title>
+  <title>GeoCymatics Explorer</title>
   <style>
     body {
       font-family: Arial, sans-serif;
       margin: 0;
       padding: 0;
-      background: linear-gradient(to bottom, red, violet, blue);
+      background: linear-gradient(to bottom, red, blue, violet);
       color: #fff;
       text-align: center;
     }
@@ -22,11 +21,12 @@
       background-color: rgba(0, 0, 0, 0.7);
       display: flex;
       justify-content: center;
+      flex-wrap: wrap;
       padding: 1rem;
     }
     nav a {
       color: #fff;
-      margin: 0 1rem;
+      margin: 0.5rem;
       text-decoration: none;
     }
     nav a:hover {
@@ -57,10 +57,7 @@
     }
     @media (max-width: 768px) {
       nav {
-        flex-direction: column;
-      }
-      nav a {
-        margin: 0.5rem 0;
+        flex-direction: row;
       }
       #visualization {
         height: 300px;
@@ -70,22 +67,22 @@
 </head>
 <body>
   <header>
-    <h1>Cymatics Explorer</h1>
+    <h1>GeoCymatics Explorer</h1>
   </header>
   <nav>
     <a href="#home">Home</a>
-    <a href="#about">About Cymatics</a>
+    <a href="#about">About GeoCymatics</a>
     <a href="#explore">Explore Patterns</a>
     <a href="#community">Community</a>
     <a href="#contact">Contact</a>
   </nav>
   <section id="home">
-    <h2>Welcome to Cymatics Explorer</h2>
-    <p>Discover the fascinating world of cymatics and explore the beautiful patterns created by sound waves.</p>
+    <h2>Welcome to GeoCymatics Explorer</h2>
+    <p>Discover the fascinating world of geocymatics and explore the beautiful patterns created by sound waves on geological substrates.</p>
   </section>
   <section id="about">
-    <h2>About Cymatics</h2>
-    <p>Cymatics is the study of visible sound and vibration. The term was coined by Hans Jenny, a Swiss scientist, in the 1960s. By using various mediums such as sand, water, and other substances, sound waves can create intricate and mesmerizing patterns.</p>
+    <h2>About GeoCymatics</h2>
+    <p>GeoCymatics is the study of visible sound and vibration patterns on geological substrates. This involves examining how sound waves interact with different types of rocks, creating intricate and mesmerizing patterns. By studying these patterns, researchers can gain insights into the vibrational behavior and material properties of rocks.</p>
   </section>
   <section id="explore">
     <h2>Explore Patterns</h2>
@@ -96,14 +93,14 @@
   </section>
   <section id="community">
     <h2>Community</h2>
-    <p>Join our community to share your cymatics experiments and connect with others who are passionate about this fascinating field.</p>
+    <p>Join our community to share your geocymatics experiments and connect with others who are passionate about this fascinating field.</p>
   </section>
   <section id="contact">
     <h2>Contact</h2>
-    <p>If you have any questions or would like to contribute to our site, please contact us at <a href="mailto:info@cymaticsexplorer.com">info@cymaticsexplorer.com</a>.</p>
+    <p>If you have any questions or would like to contribute to our site, please contact us at <a href="mailto:info@geocymaticsexplorer.com">info@geocymaticsexplorer.com</a>.</p>
   </section>
   <footer>
-    <p>&copy; 2025 Cymatics Explorer. All rights reserved.</p>
+    <p>&copy; 2025 GeoCymatics Explorer. All rights reserved.</p>
   </footer>
   <script>
     function generatePattern() {
