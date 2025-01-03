@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cymatics Explorer</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+      background-color: #f0f0f0;
+    }
+    header {
+      background-color: #333;
+      color: #fff;
+      padding: 1rem;
+      text-align: center;
+    }
+    nav {
+      background-color: #444;
+      display: flex;
+      justify-content: center;
+      padding: 1rem;
+    }
+    nav a {
+      color: #fff;
+      margin: 0 1rem;
+      text-decoration: none;
+    }
+    nav a:hover {
+      text-decoration: underline;
+    }
+    section {
+      padding: 2rem;
+      text-align: center;
+    }
+    footer {
+      background-color: #333;
+      color: #fff;
+      text-align: center;
+      padding: 1rem;
+      position: fixed;
+      bottom: 0;
+      width: 100%;
+    }
+    #visualization {
+      width: 600px;
+      height: 400px;
+      background-color: #000;
+      margin: 0 auto;
+    }
+    input, button {
+      margin: 1rem 0;
+      padding: 0.5rem;
+      font-size: 1rem;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Cymatics Explorer</h1>
+  </header>
+  <nav>
+    <a href="#home">Home</a>
+    <a href="#about">About Cymatics</a>
+    <a href="#explore">Explore Patterns</a>
+    <a href="#community">Community</a>
+    <a href="#contact">Contact</a>
+  </nav>
+  <section id="home">
+    <h2>Welcome to Cymatics Explorer</h2>
+    <p>Discover the fascinating world of cymatics and explore the beautiful patterns created by sound waves.</p>
+  </section>
+  <section id="about">
+    <h2>About Cymatics</h2>
+    <p>Cymatics is the study of visible sound and vibration. The term was coined by Hans Jenny, a Swiss scientist, in the 1960s. By using various mediums such as sand, water, and other substances, sound waves can create intricate and mesmerizing patterns.</p>
+  </section>
+  <section id="explore">
+    <h2>Explore Patterns</h2>
+    <label for="frequencyInput">Enter Frequency (Hz):</label>
+    <input type="number" id="frequencyInput" min="1" max="10000" value="440">
+    <button onclick="generatePattern()">Generate Pattern</button>
+    <canvas id="visualization"></canvas>
+  </section>
+  <section id="community">
+    <h2>Community</h2>
+    <p>Join our community to share your cymatics experiments and connect with others who are passionate about this fascinating field.</p>
+  </section>
+  <section id="contact">
+    <h2>Contact</h2>
+    <p>If you have any questions or would like to contribute to our site, please contact us at <a href="mailto:info@cymaticsexplorer.com">info@cymaticsexplorer.com</a>.</p>
+  </section>
+  <footer>
+    <p>&copy; 2025 Cymatics Explorer. All rights reserved.</p>
+  </footer>
+  <script>
+    function generatePattern() {
+      const frequency = document.getElementById('frequencyInput').value;
+      const canvas = document.getElementById('visualization');
+      const ctx = canvas.getContext('2d');
+      const width = canvas.width;
+      const height = canvas.height;
+
+      ctx.clearRect(0, 0, width, height);
+
+      const centerX = width / 2;
+      const centerY = height / 2;
+      const radius = Math.min(centerX, centerY) * 0.8;
+
+      ctx.beginPath();
+      for (let i = 0; i < 360; i += 1) {
+        const angle = i * (Math.PI / 180);
+        const x = centerX + radius * Math.sin(frequency * angle);
+        const y = centerY + radius * Math.cos(frequency * angle);
+        ctx.lineTo(x, y);
+      }
+      ctx.closePath();
+      ctx.strokeStyle = '#00ff00';
+      ctx.stroke();
+    }
+  </script>
+</body>
+</html>
