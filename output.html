@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cymatics Simulation</title>
+    <style>
+        body {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            background-color: #222;
+            color: white;
+            font-family: Arial, sans-serif;
+        }
+        canvas {
+            border: 1px solid white;
+            margin-bottom: 10px;
+            width: 100%;
+            max-width: 600px; /* Adjust max width for larger displays */
+        }
+        .controls {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-bottom: 10px;
+            width: 90%; /* Adjust width for mobile view */
+            max-width: 600px; /* Adjust max width for larger displays */
+        }
+        .control {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            color: white;
+        }
+        .control input {
+            margin-top: 5px;
+            width: 100%; /* Full width for mobile view */
+        }
+        button {
+            padding: 10px;
+            border: none;
+            background-color: #555;
+            color: white;
+            cursor: pointer;
+            width: 100%; /* Full width for mobile view */
+        }
+        button:hover {
+            background-color: #777;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="cymaticsCanvas" width="600" height="600"></canvas>
+    <div class="controls">
+        <div class="control">
+            <label for="frequencySlider">Frequency</label>
+            <input type="range" id="frequencySlider" min="0.001" max="0.02" step="0.001" value="0.005">
+        </div>
+        <div class="control">
+            <label for="amplitudeSlider">Amplitude</label>
+            <input type="range" id="amplitudeSlider" min="1" max="10" step="0.1" value="5">
+        </div>
+        <div class="control">
+            <label for="speedSlider">Speed</label>
+            <input type="range" id="speedSlider" min="0.1" max="2" step="0.1" value="1">
+        </div>
+        <button id="startButton">Start</button>
+        <button id="stopButton">Stop</button>
+        <button id="resetButton">Reset</button>
+    </div>
+    <script>
+        const canvas = document.getElementById('cymaticsCanvas');
+        const ctx = canvas.getContext('2d');
+        const width = canvas.width;
+        const height = canvas.height;
+
+        let animationFrameId;
+        let isRunning = false;
+        let time = 0;
+
+        const particles = [];
+        const colors = ['red', 'green', 'blue'];
+        const spacing = 20;
+        const particlesPerRow = Math.floor((width - spacing) / spacing);
+        const startX = (width - (particlesPerRow * spacing)) / 2 + spacing / 2;
+        const startY = (height - (particlesPerRow * spacing)) / 2 + spacing / 2;
+
+        for (let i = 0; i < 800; i++) {
+            particles.push({
+                x: startX + (i % particlesPerRow) * spacing,
+                y: startY + Math.floor(i / particlesPerRow) * spacing,
+                vx: 0,
+                vy: 0,
+                energy: 1, // Initial energy
+                color: colors[i % 3]
+            });
+        }
+
+        function drawCymaticsPattern(time) {
+            ctx.clearRect(0, 0, width, height);
+            const centerX = width / 2;
+            const centerY = height / 2;
+            const frequency = parseFloat(document.getElementById('frequencySlider').value);
+            const amplitude = parseFloat(document.getElementById('amplitudeSlider').value);
+            const speed = parseFloat(document.getElementById('speedSlider').value);
+
+            function waveEquation(x, y, t) {
+                return Math.sin(amplitude * (frequency * Math.sqrt(x * x + y * y) - t));
+            }
+
+            particles.forEach(particle => {
+                if (particle.energy > 0) {
+                    const dx = particle.x - centerX;
+                    const dy = particle.y - centerY;
+                    const distance = Math.sqrt(dx * dx + dy * dy);
+                    const value = waveEquation(dx, dy, time);
+                    const force = value * amplitude * (1 / distance);
+                    particle.vx += force * dx * 0.01 * particle.energy;
+                    particle.vy += force * dy * 0.01 * particle.energy;
+                    particle.x += particle.vx * speed;
+                    particle.y += particle.vy * speed;
+
+                    // Reduce energy over time
+                    particle.energy *= 0.99;
+
+                    // Ensure particles stay within bounds
+                    if (particle.x < 0) {
+                        particle.x = 0;
+                        particle.vx = 0;
+                    }
+                    if (particle.x > width) {
+                        particle.x = width;
+                        particle.vx = 0;
+                    }
+                    if (particle.y < 0) {
+                        particle.y = 0;
+                        particle.vy = 0;
+                    }
+                    if (particle.y > height) {
+                        particle.y = height;
+                        particle.vy = 0;
+                    }
+
+                    // Check for collisions and blend colors
+                    particles.forEach(otherParticle => {
+                        if (particle !== otherParticle) {
+                            const dist = Math.sqrt(
+                                (particle.x - otherParticle.x) ** 2 +
+                                (particle.y - otherParticle.y) ** 2
+                            );
+                            if (dist < 4) {
+                                particle.color = blendColors(particle.color, otherParticle.color);
+                            }
+                        }
+                    });
+
+                    ctx.fillStyle = particle.color;
+                    ctx.fillRect(particle.x, particle.y, 8, 8); // Make particles two times bigger
+                }
+            });
+        }
+
+        function blendColors(color1, color2) {
+            const colors = {
+                'red': [255, 0, 0],
+                'green': [0, 255, 0],
+                'blue': [0, 0, 255],
+                'yellow': [255, 255, 0],
+                'magenta': [255, 0, 255],
+                'cyan': [0, 255, 255],
+                'white': [255, 255, 255]
+            };
+
+            const c1 = colors[color1] || [0, 0, 0];
+            const c2 = colors[color2] || [0, 0, 0];
+            const blendedColor = [
+                Math.min(255, c1[0] + c2[0]),
+                Math.min(255, c1[1] + c2[1]),
+                Math.min(255, c1[2] + c2[2])
+            ];
+
+            return Object.keys(colors).find(key => 
+                colors[key][0] === blendedColor[0] && 
+                colors[key][1] === blendedColor[1] &&
+                colors[key][2] === blendedColor[2]
+            ) || `rgb(${blendedColor[0]}, ${blendedColor[1]}, ${blendedColor[2]})`;
+        }
+
+        function animate() {
+            if (isRunning) {
+                time += 1;
+                drawCymaticsPattern(time);
+                animationFrameId = requestAnimationFrame(animate);
+            }
+        }
+
+        document.getElementById('startButton').addEventListener('click', () => {
+            if (!isRunning) {
+                isRunning = true;
+                animate();
+            }
+        });
+
+        document.getElementById('stopButton').addEventListener('click', () => {
+            isRunning = false;
+            cancelAnimationFrame(animationFrameId);
+        });
+
+        document.getElementById('resetButton').addEventListener('click', () => {
+            isRunning = false;
+            cancelAnimationFrame(animationFrameId);
+            time = 0;
+            particles.forEach((particle, i) => {
+                particle.x = startX + (i % particlesPerRow) * spacing;
+                particle.y = startY + Math.floor(i / particlesPerRow) * spacing;
+                particle.vx = 0;
+                particle.vy = 0;
+                particle.energy = 1; // Reset energy
+                particle.color = colors[i % 3];
+            });
+            drawCymaticsPattern(time);
+        });
+
+        // Initial draw
+        drawCymaticsPattern(time);
+    </script>
+</body>
+</html>
