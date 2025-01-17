@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Aeolian Dune Simulation</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/dat-gui/0.7.7/dat.gui.min.js"></script>
+    <style>
+        body { margin: 0; overflow: hidden; }
+        #info {
+            position: absolute;
+            top: 10px;
+            width: 100%;
+            text-align: center;
+            color: white;
+            font-family: Arial;
+            pointer-events: none;
+        }
+    </style>
+</head>
+<body>
+    <div id="info">Aeolian Dune Formation Simulation<br>Drag to rotate | Pinch to zoom</div>
+    <script>
+        // Initialize Three.js scene
+        const scene = new THREE.Scene();
+        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+        const renderer = new THREE.WebGLRenderer();
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        document.body.appendChild(renderer.domElement);
+
+        // Grid size and scale
+        const gridSize = 100;
+        const scale = 0.1;
+
+        // Create heightmap array
+        let heightMap = new Float32Array(gridSize * gridSize);
+        
+        // Create ground plane geometry
+        const geometry = new THREE.PlaneGeometry(50, 50, gridSize - 1, gridSize - 1);
+        const material = new THREE.MeshPhongMaterial({
+            color: 0xd2b48c,
+            wireframe: false,
+            flatShading: true
+        });
+        const ground = new THREE.Mesh(geometry, material);
+        ground.rotation.x = -Math.PI / 2;
+        scene.add(ground);
+
+        // Add lighting
+        const ambientLight = new THREE.AmbientLight(0x404040);
+        scene.add(ambientLight);
+        const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
+        directionalLight.position.set(1, 1, 1);
+        scene.add(directionalLight);
+
+        // Camera position
+        camera.position.set(30, 30, 30);
+        camera.lookAt(0, 0, 0);
+
+        // Simple touch controls
+        let touchX = 0;
+        let touchY = 0;
+        let isRotating = false;
+
+        document.addEventListener('touchstart', (event) => {
+            event.preventDefault();
+            touchX = event.touches[0].clientX;
+            touchY = event.touches[0].clientY;
+            isRotating = true;
+        });
+
+        document.addEventListener('touchmove', (event) => {
+            if (!isRotating) return;
+            
+            const deltaX = event.touches[0].clientX - touchX;
+            const deltaY = event.touches[0].clientY - touchY;
+            
+            camera.position.x = camera.position.x * Math.cos(deltaX * 0.01) - camera.position.z * Math.sin(deltaX * 0.01);
+            camera.position.z = camera.position.x * Math.sin(deltaX * 0.01) + camera.position.z * Math.cos(deltaX * 0.01);
+            
+            camera.position.y += deltaY * 0.1;
+            
+            camera.lookAt(0, 0, 0);
+            
+            touchX = event.touches[0].clientX;
+            touchY = event.touches[0].clientY;
+        });
+
+        document.addEventListener('touchend', () => {
+            isRotating = false;
+        });
+
+        // Simulation parameters
+        const params = {
+            windSpeed: 1.0,
+            windDirection: 0,
+            soundFrequency: 1.0,
+            soundAmplitude: 1.0,
+            duneType: 'barchan',
+            pause: false,
+            reset: function() {
+                resetSimulation();
+            }
+        };
+
+        // GUI setup
+        const gui = new dat.GUI();
+        gui.add(params, 'windSpeed', 0, 2);
+        gui.add(params, 'windDirection', 0, 360);
+        gui.add(params, 'soundFrequency', 0, 5);
+        gui.add(params, 'soundAmplitude', 0, 2);
+        gui.add(params, 'duneType', ['barchan', 'star', 'linear', 'parabolic']);
+        gui.add(params, 'pause');
+        gui.add(params, 'reset');
+
+        // Physics constants
+        const SALTATION_THRESHOLD = 0.5;
+        const AVALANCHE_ANGLE = 34 * Math.PI / 180;
+        const PARTICLE_SIZE = 0.1;
+
+        function resetSimulation() {
+            heightMap.fill(0);
+            updateGeometry();
+        }
+
+        function calculateSaltation(x, y, windSpeed, windDirection) {
+            const angle = windDirection * Math.PI / 180;
+            const windX = Math.cos(angle) * windSpeed;
+            const windY = Math.sin(angle) * windSpeed;
+            
+            return Math.max(0, (windX * x + windY * y) * PARTICLE_SIZE);
+        }
+
+        function applySoundWave(x, y, time) {
+            const distance = Math.sqrt(x * x + y * y);
+            const wave = Math.sin(distance * params.soundFrequency + time) * params.soundAmplitude;
+            return wave * 0.2;
+        }
+
+        function updateGeometry() {
+            const positions = ground.geometry.attributes.position.array;
+            for (let i = 0; i < positions.length; i += 3) {
+                const index = Math.floor(i / 3);
+                positions[i + 2] = heightMap[index] * scale;
+            }
+            ground.geometry.attributes.position.needsUpdate = true;
+            ground.geometry.computeVertexNormals();
+        }
+
+        function simulateStep(time) {
+            if (params.pause) return;
+
+            for (let x = 0; x < gridSize; x++) {
+                for (let y = 0; y < gridSize; y++) {
+                    const idx = x + y * gridSize;
+                    
+                    const saltation = calculateSaltation(x - gridSize/2, y - gridSize/2, params.windSpeed, params.windDirection);
+                    const sound = applySoundWave(x - gridSize/2, y - gridSize/2, time);
+                    
+                    switch(params.duneType) {
+                        case 'barchan':
+                            heightMap[idx] += (saltation + sound) * (1 - Math.abs(x - gridSize/2) / gridSize);
+                            break;
+                        case 'star':
+                            const radial = Math.sin(Math.atan2(y - gridSize/2, x - gridSize/2) * 3);
+                            heightMap[idx] += (saltation + sound) * radial;
+                            break;
+                        case 'linear':
+                            heightMap[idx] += (saltation + sound) * Math.sin(x * 0.1);
+                            break;
+                        case 'parabolic':
+                            const dist = Math.sqrt(Math.pow(x - gridSize/2, 2) + Math.pow(y - gridSize/2, 2));
+                            heightMap[idx] += (saltation + sound) * (1 - dist/gridSize);
+                            break;
+                    }
+                    
+                    if (x > 0 && x < gridSize-1 && y > 0 && y < gridSize-1) {
+                        const slope = Math.max(
+                            Math.abs(heightMap[idx] - heightMap[idx-1]),
+                            Math.abs(heightMap[idx] - heightMap[idx+1]),
+                            Math.abs(heightMap[idx] - heightMap[idx-gridSize]),
+                            Math.abs(heightMap[idx] - heightMap[idx+gridSize])
+                        );
+                        
+                        if (slope > AVALANCHE_ANGLE) {
+                            heightMap[idx] *= 0.99;
+                        }
+                    }
+                }
+            }
+            
+            updateGeometry();
+        }
+
+        // Animation loop
+        let clock = new THREE.Clock();
+        function animate() {
+            requestAnimationFrame(animate);
+            simulateStep(clock.getElapsedTime());
+            renderer.render(scene, camera);
+        }
+        animate();
+
+        // Handle window resize
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+    </script>
+</body>
+</html>
